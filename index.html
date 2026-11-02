@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071211" />
+    <title>Asteroid Drifter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <div id="game" aria-label="Asteroid Drifter game scene"></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <header class="topbar">
+        <a class="wordmark" href="/" aria-label="Asteroid Drifter home">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <span>DRIFTER<span class="wordmark-dot">.</span></span>
+        </a>
+        <div class="topbar-actions">
+          <button class="icon-button" id="sound-toggle" type="button" aria-label="Mute sound" title="Mute sound">
+            <span id="sound-glyph" aria-hidden="true">SOUND ON</span>
+          </button>
+        </div>
+      </header>
+      <section class="scoreboard" aria-label="Game statistics">
+        <div class="stat-block"><span class="stat-label">SCORE</span><strong id="score">00000</strong></div>
+        <div class="stat-block best-stat"><span class="stat-label">BEST</span><strong id="best">00000</strong></div>
+        <div class="lives-block"><span class="stat-label">HULL</span><div id="lives" class="life-pips" aria-label="3 lives"><i></i><i></i><i></i></div></div>
+      </section>
+      <section class="center-message" id="message-panel" aria-live="polite">
+        <div class="message-kicker"><span class="status-light"></span><span id="message-kicker">DEEP SPACE / SECTOR 01</span></div>
+        <h1 id="message-title">ASTEROID<br /><span>DRIFTER</span></h1>
+        <p id="message-copy">Keep moving. The field won't.</p>
+        <button class="primary-button" id="start-button" type="button"><span id="start-label">LAUNCH RUN</span><span aria-hidden="true">&#8594;</span></button>
+        <div class="control-hint"><span>WASD / ARROWS</span><b>MOVE</b><span>SPACE</span><b>FIRE</b><span>P</span><b>PAUSE</b></div>
+      </section>
+      <footer class="bottom-bar">
+        <span class="footer-location"><span class="signal-mark"></span> OUTER RIM <span class="footer-divider">/</span> 07.24 AU</span>
+        <div class="mobile-controls" aria-label="Touch controls">
+          <button class="touch-control turn-left" data-control="left" type="button" aria-label="Turn left">&#8592;</button>
+          <button class="touch-control thrust" data-control="thrust" type="button" aria-label="Thrust">&#9650;</button>
+          <button class="touch-control turn-right" data-control="right" type="button" aria-label="Turn right">&#8594;</button>
+          <button class="touch-control fire" data-control="fire" type="button" aria-label="Fire">FIRE</button>
+        </div>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

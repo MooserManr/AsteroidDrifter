@@ -1,0 +1,79 @@
+:root {
+  font-family: 'DM Mono', monospace;
+  color: #e8f4e9;
+  background: #071211;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --mint: #b6f57b;
+  --coral: #ff765f;
+  --muted: #82938d;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { min-width: 320px; background: #071211; }
+button, a { color: inherit; font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+.game-shell { position: relative; width: 100%; height: 100%; overflow: hidden; isolation: isolate; background: radial-gradient(ellipse at 50% 48%, #10211d 0%, #091512 58%, #050c0b 100%); }
+#game { position: absolute; inset: 0; z-index: -2; }
+#game canvas { display: block; width: 100%; height: 100%; }
+.vignette { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 34%, rgba(3, 10, 9, .18) 68%, rgba(3, 9, 8, .78) 130%); }
+.topbar { position: absolute; z-index: 2; top: 0; left: 0; right: 0; height: 84px; padding: 0 5.2vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(202, 228, 213, .1); }
+.wordmark { display: inline-flex; gap: 11px; align-items: center; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: 1.5px; }
+.brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid rgba(182, 245, 123, .62); color: var(--mint); font-size: 19px; line-height: 1; transform: skew(-8deg); }
+.wordmark-dot { color: var(--coral); }
+.topbar-actions { display: flex; align-items: center; gap: 13px; }
+.icon-button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid rgba(207, 226, 215, .2); background: rgba(8, 18, 16, .45); color: #d3ddd6; font-size: 10px; letter-spacing: .8px; cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.icon-button:hover { border-color: var(--mint); color: var(--mint); background: rgba(182, 245, 123, .06); }
+.scoreboard { position: absolute; z-index: 2; top: 117px; left: 5.2vw; display: flex; align-items: flex-start; gap: 43px; }
+.stat-block, .lives-block { display: flex; flex-direction: column; gap: 6px; }
+.stat-label { color: #84958e; font-size: 9px; letter-spacing: 1.7px; }
+.stat-block strong { color: #f0f7ef; font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 600; line-height: 1; letter-spacing: 1px; }
+.best-stat strong { color: #a7b3ac; font-size: 23px; }
+.life-pips { display: flex; gap: 5px; padding-top: 3px; }
+.life-pips i { display: block; width: 19px; height: 5px; background: var(--mint); box-shadow: 0 0 11px rgba(182, 245, 123, .28); transition: opacity .2s; }
+.life-pips i.lost { opacity: .16; box-shadow: none; }
+.center-message { position: absolute; z-index: 2; top: 48%; left: 50%; width: min(460px, calc(100vw - 42px)); text-align: center; transform: translate(-50%, -50%); transition: opacity .35s, transform .35s; }
+.center-message.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, -46%); }
+.message-kicker { display: flex; justify-content: center; align-items: center; gap: 9px; margin-bottom: 18px; color: var(--mint); font-size: 9px; letter-spacing: 2px; }
+.status-light, .signal-mark { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 11px rgba(255, 118, 95, .7); }
+h1 { margin: 0; color: #edf5eb; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(70px, 9vw, 112px); font-weight: 700; line-height: .78; letter-spacing: 0; }
+h1 span { color: var(--mint); }
+.center-message p { margin: 24px 0 25px; color: #abb9b0; font-size: 12px; letter-spacing: .3px; }
+.primary-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 30px; min-width: 190px; height: 49px; padding: 0 18px; border: 0; background: var(--mint); color: #10190f; font-size: 10px; font-weight: 500; letter-spacing: 1px; cursor: pointer; transition: background .2s, transform .2s; }
+.primary-button:hover { background: #d0ffa2; transform: translateY(-2px); }
+.primary-button span:last-child { font-size: 16px; }
+.control-hint { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 27px; color: #8d9d95; font-size: 8px; }
+.control-hint b { margin-right: 10px; color: #c1ccc4; font-weight: 400; }
+.bottom-bar { position: absolute; z-index: 2; right: 5.2vw; bottom: 0; left: 5.2vw; height: 61px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(202, 228, 213, .1); color: #84958e; font-size: 9px; letter-spacing: 1px; }
+.footer-location { display: inline-flex; align-items: center; gap: 9px; }
+.signal-mark { width: 5px; height: 5px; background: var(--mint); box-shadow: 0 0 8px rgba(182, 245, 123, .65); }
+.footer-divider { color: #4a5d55; }
+.footer-note { color: #56685f; }
+.mobile-controls { display: none; }
+@media (max-width: 650px) {
+  .topbar { height: 66px; padding: 0 19px; }
+  .wordmark { font-size: 17px; }
+  .brand-mark { width: 27px; height: 27px; }
+  .topbar-actions { gap: 6px; }
+  .icon-button { min-height: 34px; padding: 0 9px; font-size: 8px; letter-spacing: .3px; }
+  .new-tab-button { font-size: 0; gap: 0; width: 37px; padding: 0; }
+  .new-tab-button span { font-size: 18px; }
+  .scoreboard { top: 86px; left: 20px; gap: 25px; }
+  .stat-label { font-size: 8px; }
+  .stat-block strong { font-size: 23px; }
+  .best-stat strong { font-size: 20px; }
+  .life-pips i { width: 14px; }
+  .center-message { top: 45%; }
+  .message-kicker { margin-bottom: 17px; font-size: 8px; }
+  h1 { font-size: clamp(68px, 18vw, 94px); }
+  .center-message p { margin: 21px 0 21px; font-size: 11px; }
+  .control-hint { max-width: 300px; margin: 20px auto 0; gap: 6px; font-size: 7px; }
+  .bottom-bar { right: 20px; bottom: 88px; left: 20px; height: 37px; border-top: 0; font-size: 7px; }
+  .footer-note { display: none; }
+  .mobile-controls { position: absolute; z-index: 3; right: 20px; bottom: 16px; left: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+  .touch-control { height: 53px; border: 1px solid rgba(198, 225, 209, .24); background: rgba(8, 18, 16, .72); color: #e4eee6; font-size: 18px; touch-action: none; }
+  .touch-control:active, .touch-control.active { border-color: var(--mint); color: var(--mint); background: rgba(182, 245, 123, .12); }
+  .touch-control.thrust { color: var(--mint); }
+  .touch-control.fire { font-size: 9px; letter-spacing: 1px; }
+}
