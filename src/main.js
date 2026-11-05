@@ -13,11 +13,14 @@ const startButton = document.querySelector('#start-button');
 const startLabel = document.querySelector('#start-label');
 const soundToggle = document.querySelector('#sound-toggle');
 const soundGlyph = document.querySelector('#sound-glyph');
-const Thrust = 5.2;
+const Dnode = document.querySelector('#difficulty');
 const Drag = 0.99;
-const MaxSpeed = 12;
-const TurnSpeed = 3.1;
-const ShotSpeed = 20;
+let Thrust = 7;
+let MaxSpeed = 7;
+let TurnSpeed = 3.1;
+let ShotSpeed = 20;
+let Exp = 0;
+let Difficulty = 1;
 
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 100);
@@ -32,7 +35,7 @@ renderer.toneMappingExposure = 1.25;
 mount.appendChild(renderer.domElement);
 
 let worldWidth = 24;
-const worldDepth = 16;
+let worldDepth = 16;
 const keys = new Set();
 const touchKeys = new Set();
 const asteroids = [];
@@ -58,13 +61,22 @@ const fillLight = new THREE.PointLight(0x75dfaa, 45, 28);
 fillLight.position.set(6, 6, -6);
 scene.add(fillLight);
 
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
-  new THREE.MeshBasicMaterial({ color: 0x091714, transparent: true, opacity: 0.28 })
+scene.add(new THREE.Group());
+const WrapMarker = new THREE.Mesh(
+  new THREE.BoxGeometry(worldWidth / 0.55, 0.1, worldDepth / 0.75),
+  new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.2 })
 );
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -0.7;
-scene.add(floor);
+WrapMarker.position.set(0, -1, 0);
+scene.add(WrapMarker);
+
+scene.add(new THREE.Group());
+const VoidMarker = new THREE.Mesh(
+  new THREE.BoxGeometry(worldWidth * 4, 0.1, worldDepth * 4),
+  new THREE.MeshStandardMaterial({ color: 0x800080, transparent: true, opacity: 0.2 })
+);
+scene.add(VoidMarker);
+
+
 
 
 
@@ -76,9 +88,9 @@ const shipBody = new THREE.Mesh(
 shipBody.rotation.x = Math.PI / 2;
 ship.add(shipBody);
 const engineGlow = new THREE.PointLight(0xff765f, 0, 3);
-engineGlow.position.set(0, 0.1, 0.65);
+engineGlow.position.set(0, 0.1, -0.65);
 ship.add(engineGlow);
-ship.position.y = 0.34;
+ship.position.y = 0;
 scene.add(ship);
 let shipVelocity = new THREE.Vector3();
 
@@ -115,19 +127,19 @@ function makeAsteroid(size = 1) {
   const positionAttribute = geometry.getAttribute('position');
   for (let index = 0; index < positionAttribute.count; index += 1) {
     const vertex = new THREE.Vector3().fromBufferAttribute(positionAttribute, index);
-    vertex.multiplyScalar(0.79 + Math.random() * 0.1);
+    vertex.multiplyScalar(0.79 + Math.random() * 0.01);
     positionAttribute.setXYZ(index, vertex.x, vertex.y, vertex.z);
   }
   geometry.computeVertexNormals();
   const mesh = new THREE.Mesh(geometry, asteroidMaterial.clone());
   mesh.material.color.setHSL(0.38 + Math.random() * 0.12, 0.08 + Math.random() * 0.1, 0.34 + Math.random() * 0.17);
-  mesh.position.y = 0.4 + size * 0.12;
+  mesh.position.y = 0
   mesh.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
   const asteroid = {
     mesh,
     size,
-    radius: size * 0.78,
-    velocity: new THREE.Vector3((Math.random() - 0.5) * 1.5, 0, (Math.random() - 0.5) * 1.5),
+    radius: size,
+    velocity: new THREE.Vector3(),
     spin: new THREE.Vector3(Math.random() * 0.9 - 0.45, Math.random() * 0.9 - 0.45, Math.random() * 0.9 - 0.45)
   };
   asteroids.push(asteroid);
@@ -136,13 +148,13 @@ function makeAsteroid(size = 1) {
 }
 
 function spawnAsteroid() {
-  const size = Math.random() * 2 + 0.5;
+  const size = Math.random() * 2 + 0.5 + Difficulty * 0.2;
   const asteroid = makeAsteroid(size);
   const edge = Math.floor(Math.random() * 4);
-  asteroid.mesh.position.x = edge === 0 ? -worldWidth / 2 : edge === 1 ? worldWidth / 2 : (Math.random() - 0.5) * worldWidth;
-  asteroid.mesh.position.z = edge === 2 ? -worldDepth / 2 : edge === 3 ? worldDepth / 2 : (Math.random() - 0.5) * worldDepth;
+  asteroid.mesh.position.x = edge === 0 ? -worldWidth / 0.7 : edge === 1 ? worldWidth / 0.7 : (Math.random() - 0.5) * worldWidth;
+  asteroid.mesh.position.z = edge === 2 ? -worldDepth / 0.7 : edge === 3 ? worldDepth / 0.7 : (Math.random() - 0.5) * worldDepth;
   const towardShip = new THREE.Vector3(-asteroid.mesh.position.x, 0, -asteroid.mesh.position.z).normalize();
-  asteroid.velocity.add(towardShip.multiplyScalar(0.45 + Math.random() * 2));
+  asteroid.velocity.add(towardShip.multiplyScalar(0.45 + Math.random() * 5));
 }
 
 function addBurst(position, color, count = 10) {
@@ -179,19 +191,26 @@ function destroyAsteroid(asteroid, index) {
   playTone(220, 0.12, 'sawtooth', 0.025);
   if (asteroid.size > 1.2) {
     for (let piece = 0; piece < 2; piece += 1) {
-      const child = makeAsteroid(asteroid.size / (Math.random() + 0.5 * 3));
+      const child = makeAsteroid(asteroid.size / ((Math.random() + 0.5 * 3)));
       child.mesh.position.copy(asteroid.mesh.position);
       child.velocity.set((Math.random() - 0.5) * 6, 0, (Math.random() - 0.5) * 6);
     }
   }
 }
 
+function wrapPositionEntity(position) {
+  if (position.x > worldWidth / 0.7) position.x = -worldWidth / 0.7;
+  if (position.x < -worldWidth / 0.7) position.x = worldWidth / 0.7;
+  if (position.z > worldDepth / 0.7) position.z = -worldDepth / 0.7;
+  if (position.z < -worldDepth / 0.7) position.z = worldDepth / 0.7;
+}
 function wrapPosition(position) {
   if (position.x > worldWidth / 1.5) position.x = -worldWidth / 1.5;
   if (position.x < -worldWidth / 1.5) position.x = worldWidth / 1.5;
   if (position.z > worldDepth / 1.5) position.z = -worldDepth / 1.5;
   if (position.z < -worldDepth / 1.5) position.z = worldDepth / 1.5;
 }
+
 
 function setLives(value) {
   lives = value;
@@ -207,6 +226,12 @@ function loseLife() {
   shipVelocity.set(0, 0, 0);
   ship.position.set(0, 0.34, 0);
   ship.rotation.y = 0;
+  Difficulty = 1;
+  Thrust = 7;
+  MaxSpeed = 7;
+  TurnSpeed = 3.1;
+  ShotSpeed = 20;
+  Exp = 0;
   if (lives <= 0) endRun();
 }
 
@@ -267,11 +292,19 @@ function togglePause() {
 function update(delta) {
   if (state !== 'playing') return;
   shotClock = Math.max(0, shotClock - delta);
-  camera.position.copy(ship.position).add(new THREE.Vector3(0, 10, 0));
   const left = keys.has('arrowleft') || keys.has('a') || touchKeys.has('left');
   const right = keys.has('arrowright') || keys.has('d') || touchKeys.has('right');
   const thrust = keys.has('arrowup') || keys.has('w') || touchKeys.has('thrust');
-  const firing = keys.has(' ') || touchKeys.has('fire');
+  const firing = keys.has(' ');
+  const debug1 = keys.has('1'); 
+  const debug2 = keys.has('2');
+  if (debug1) {
+    Difficulty += 1;
+    Dnode.textContent = String(Difficulty);
+  }
+  if (debug2) {
+    spawnAsteroid();
+  }
   if (left) ship.rotation.y += delta * TurnSpeed;
   if (right) ship.rotation.y -= delta * TurnSpeed;
   if (thrust) {
@@ -284,13 +317,13 @@ function update(delta) {
   ship.position.addScaledVector(shipVelocity, delta);
   wrapPosition(ship.position);
   if (firing) fire();
+  camera.position.copy(ship.position).add(new THREE.Vector3(0, 10, 0));
 
   spawnClock += delta;
   const spawnInterval = Math.max(0.55, 1.65 - level * 0.07);
   if (spawnClock > spawnInterval && asteroids.length < 15) {
     spawnClock = 0;
     spawnAsteroid();
-    if (score > level * 300) level += 1;
   }
 
   for (let index = shots.length - 1; index >= 0; index -= 1) {
@@ -305,7 +338,7 @@ function update(delta) {
     let hit = false;
     for (let asteroidIndex = asteroids.length - 1; asteroidIndex >= 0; asteroidIndex -= 1) {
       const asteroid = asteroids[asteroidIndex];
-      if (shot.mesh.position.distanceTo(asteroid.mesh.position) < asteroid.radius + 0.18) {
+      if (shot.mesh.position.distanceTo(asteroid.mesh.position) < asteroid.radius) {
         destroyAsteroid(asteroid, asteroidIndex);
         hit = true;
         break;
@@ -314,6 +347,7 @@ function update(delta) {
     if (hit) {
       scene.remove(shot.mesh);
       shots.splice(index, 1);
+      Exp += 1;
     }
   }
 
@@ -323,13 +357,15 @@ function update(delta) {
     asteroid.mesh.rotation.x += asteroid.spin.x * delta;
     asteroid.mesh.rotation.y += asteroid.spin.y * delta;
     asteroid.mesh.rotation.z += asteroid.spin.z * delta;
-    wrapPosition(asteroid.mesh.position);
-    if (asteroid.mesh.position.distanceTo(ship.position) < asteroid.radius + 0.48) {
+    wrapPositionEntity(asteroid.mesh.position);
+    if (asteroid.mesh.position.distanceTo(ship.position) < asteroid.radius * 0.9) {
       scene.remove(asteroid.mesh);
       asteroid.mesh.geometry.dispose();
       asteroid.mesh.material.dispose();
       asteroids.splice(index, 1);
       loseLife();
+      Dnode.textContent = String(Difficulty);
+
     }
   }
 
@@ -347,14 +383,28 @@ function update(delta) {
   }
 }
 
+function LevelUp() {
+  if (Exp >= 10) {
+    Difficulty += 1;
+    Thrust += Math.random() / 2;
+    MaxSpeed += Math.random() / 2;
+    TurnSpeed += Math.random() / 2;
+    ShotSpeed += Math.random() / 2;
+    Exp = 0;
+    Dnode.textContent = String(Difficulty);
+  }
+}
+
 function animate(time) {
   requestAnimationFrame(animate);
   const delta = Math.min((time - lastTime) / 1000 || 0, 0.035);
   lastTime = time;
   update(delta);
   renderer.render(scene, camera);
+  LevelUp();
 }
 requestAnimationFrame(animate);
+
 
 function resize() {
   const aspect = window.innerWidth / window.innerHeight;
