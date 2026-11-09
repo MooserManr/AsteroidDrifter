@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import './style.css';
+import { ThreeMFLoader } from 'three/examples/jsm/Addons.js';
 
 const mount = document.querySelector('#game');
 const scoreNode = document.querySelector('#score');
@@ -13,14 +14,28 @@ const startButton = document.querySelector('#start-button');
 const startLabel = document.querySelector('#start-label');
 const soundToggle = document.querySelector('#sound-toggle');
 const soundGlyph = document.querySelector('#sound-glyph');
+const shopToggle = document.querySelector('#shop-toggle');
 const Dnode = document.querySelector('#difficulty');
+const shopPanel = document.querySelector('#shop-panel');
+const shopCoinsNode = document.querySelector('#shop-coins');
 const Drag = 0.99;
-let Thrust = 7;
+let ShotTime = 0.7;
+let shotClock = 0;
+let Thrust = 2.5;
 let MaxSpeed = 7;
-let TurnSpeed = 3.1;
-let ShotSpeed = 20;
+let TurnSpeed = 1;
+let ShotSpeed = 10;
 let Exp = 0;
 let Difficulty = 1;
+let Coins = 0;
+const purchasedUpgrades = { thrust: 0, speed: 0, turn: 0, weapon: 0, ShotTime: 0 };
+const upgradeOptions = {
+  thrust: { costScaling: 1, getValue: () => Thrust, apply: () => { Thrust += 1; }, format: (value) => value.toFixed(1) },
+  speed: { costScaling: 1, getValue: () => MaxSpeed, apply: () => { MaxSpeed += 1; }, format: (value) => value.toFixed(1) },
+  turn: { costScaling: 1, getValue: () => TurnSpeed, apply: () => { TurnSpeed += 0.3; }, format: (value) => value.toFixed(1) },
+  weapon: { costScaling: 1, getValue: () => ShotSpeed, apply: () => { ShotSpeed += 2; }, format: (value) => value.toFixed(1) },
+  ShotTime: { costScaling: 1, getValue: () => ShotTime, apply: () => { ShotTime -= 0.07; }, format: (value) => value.toFixed(1) }
+};
 
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 100);
@@ -46,7 +61,6 @@ let score = 0;
 let lives = 3;
 let level = 1;
 let spawnClock = 0;
-let shotClock = 0;
 let lastTime = 0;
 let soundEnabled = true;
 let audioContext;
@@ -63,7 +77,7 @@ scene.add(fillLight);
 
 scene.add(new THREE.Group());
 const WrapMarker = new THREE.Mesh(
-  new THREE.BoxGeometry(worldWidth / 0.55, 0.1, worldDepth / 0.75),
+  new THREE.BoxGeometry(worldWidth / 0.75, 0.1, worldDepth / 0.75),
   new THREE.MeshStandardMaterial({ color: 0xff0000, transparent: true, opacity: 0.2 })
 );
 WrapMarker.position.set(0, -1, 0);
@@ -153,8 +167,7 @@ function spawnAsteroid() {
   const edge = Math.floor(Math.random() * 4);
   asteroid.mesh.position.x = edge === 0 ? -worldWidth / 0.7 : edge === 1 ? worldWidth / 0.7 : (Math.random() - 0.5) * worldWidth;
   asteroid.mesh.position.z = edge === 2 ? -worldDepth / 0.7 : edge === 3 ? worldDepth / 0.7 : (Math.random() - 0.5) * worldDepth;
-  const towardShip = new THREE.Vector3(-asteroid.mesh.position.x, 0, -asteroid.mesh.position.z).normalize();
-  asteroid.velocity.add(towardShip.multiplyScalar(0.45 + Math.random() * 5));
+  asteroid.velocity.set((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5) * 10);
 }
 
 function addBurst(position, color, count = 10) {
@@ -170,14 +183,14 @@ function addBurst(position, color, count = 10) {
 
 function fire() {
   if (shotClock > 0 || state !== 'playing') return;
-  shotClock = 0.2;
+  shotClock = ShotTime;
   const direction = new THREE.Vector3(Math.sin(ship.rotation.y), 0, Math.cos(ship.rotation.y));
   const geometry = new THREE.SphereGeometry(0.075, 8, 6);
   const mesh = new THREE.Mesh(geometry, projectileMaterial);
   mesh.position.copy(ship.position).add(direction.clone().multiplyScalar(0.1));
   mesh.position.y = 0.42;
   scene.add(mesh);
-  shots.push({ mesh, velocity: direction.multiplyScalar(ShotSpeed).add(shipVelocity), life: 1.25 });
+  shots.push({ mesh, velocity: direction.multiplyScalar(ShotSpeed).add(shipVelocity), life: 2 });
   playTone(680, 0.06, 'triangle', 0.018);
 }
 
@@ -199,10 +212,10 @@ function destroyAsteroid(asteroid, index) {
 }
 
 function wrapPositionEntity(position) {
-  if (position.x > worldWidth / 0.7) position.x = -worldWidth / 0.7;
-  if (position.x < -worldWidth / 0.7) position.x = worldWidth / 0.7;
-  if (position.z > worldDepth / 0.7) position.z = -worldDepth / 0.7;
-  if (position.z < -worldDepth / 0.7) position.z = worldDepth / 0.7;
+  if (position.x > worldWidth) position.x = -worldWidth;
+  if (position.x < -worldWidth) position.x = worldWidth;
+  if (position.z > worldDepth) position.z = -worldDepth;
+  if (position.z < -worldDepth) position.z = worldDepth;
 }
 function wrapPosition(position) {
   if (position.x > worldWidth / 1.5) position.x = -worldWidth / 1.5;
@@ -226,13 +239,10 @@ function loseLife() {
   shipVelocity.set(0, 0, 0);
   ship.position.set(0, 0.34, 0);
   ship.rotation.y = 0;
-  Difficulty = 1;
-  Thrust = 7;
-  MaxSpeed = 7;
-  TurnSpeed = 3.1;
-  ShotSpeed = 20;
   Exp = 0;
-  if (lives <= 0) endRun();
+  if (lives <= 0) {
+    endRun();
+  }
 }
 
 function showPanel(mode) {
@@ -247,12 +257,20 @@ function showPanel(mode) {
     titleNode.innerHTML = 'RUN<br /><span>PAUSED</span>';
     copyNode.textContent = 'Your drift is holding. Resume when ready.';
     startLabel.textContent = 'RESUME RUN';
+  } else if (mode === 'shop') {
+    kickerNode.textContent = 'FLIGHT SYSTEMS / UPGRADES';
+    titleNode.innerHTML = 'SHOP';
+    copyNode.textContent = 'Spend credits to tune your ship.';
+    startLabel.textContent = 'CLOSE SHOP';
   } else {
     kickerNode.textContent = 'SIGNAL LOST / RUN COMPLETE';
     titleNode.innerHTML = 'SHIP<br /><span>LOST</span>';
     copyNode.textContent = `Final score ${String(score).padStart(5, '0')} / Best ${String(bestScore).padStart(5, '0')}`;
     startLabel.textContent = 'FLY AGAIN';
   }
+  shopPanel.classList.toggle('hidden', mode !== 'shop');
+  document.querySelector('.control-hint').classList.toggle('hidden', mode === 'shop');
+  if (mode === 'shop') renderShop();
 }
 
 function startRun() {
@@ -262,6 +280,14 @@ function startRun() {
   shots.length = 0;
   score = 0;
   level = 1;
+  Thrust = 2.5;
+  MaxSpeed = 7;
+  TurnSpeed = 1;
+  ShotSpeed = 10;
+  Exp = 0;
+  Difficulty = 1;
+  Coins = 0;
+  Object.keys(purchasedUpgrades).forEach((key) => {purchasedUpgrades[key] = 0;});
   updateScore(0);
   setLives(3);
   ship.position.set(0, 0.34, 0);
@@ -289,6 +315,42 @@ function togglePause() {
   }
 }
 
+function toggleShop() {
+  if (state === 'playing') {
+    state = 'shop';
+    showPanel('shop');
+  } else if (state === 'shop') {
+    state = 'playing';
+    panel.classList.add('hidden');
+  }
+}
+
+function renderShop() {
+  shopCoinsNode.textContent = String(Coins);
+  Object.entries(upgradeOptions).forEach(([upgrade, option]) => {
+    const button = shopPanel.querySelector(`[data-upgrade="${upgrade}"]`);
+    const cost = getUpgradeCost(upgrade);
+    button.querySelector('[data-upgrade-value]').textContent = option.format(option.getValue());
+    button.querySelector('[data-upgrade-cost]').textContent = String(cost);
+    button.disabled = Coins < cost;
+  });
+}
+
+function getUpgradeCost(upgrade) {
+  return Math.ceil(1 + purchasedUpgrades[upgrade] * upgradeOptions[upgrade].costScaling);
+}
+
+function purchaseUpgrade(upgrade) {
+  const option = upgradeOptions[upgrade];
+  if (!option) return;
+  const cost = getUpgradeCost(upgrade);
+  if (Coins < cost) return;
+  Coins -= cost;
+  purchasedUpgrades[upgrade] += 1;
+  option.apply();
+  renderShop();
+}
+
 function update(delta) {
   if (state !== 'playing') return;
   shotClock = Math.max(0, shotClock - delta);
@@ -298,12 +360,17 @@ function update(delta) {
   const firing = keys.has(' ');
   const debug1 = keys.has('1'); 
   const debug2 = keys.has('2');
+  const debug3 = keys.has('3');
   if (debug1) {
     Difficulty += 1;
     Dnode.textContent = String(Difficulty);
   }
   if (debug2) {
     spawnAsteroid();
+  }
+  if (debug3) {
+    Coins += 1;
+    shopCoinsNode.textContent = String(Coins);
   }
   if (left) ship.rotation.y += delta * TurnSpeed;
   if (right) ship.rotation.y -= delta * TurnSpeed;
@@ -321,7 +388,7 @@ function update(delta) {
 
   spawnClock += delta;
   const spawnInterval = Math.max(0.55, 1.65 - level * 0.07);
-  if (spawnClock > spawnInterval && asteroids.length < 15) {
+  if (spawnClock > spawnInterval && asteroids.length < 15 + Math.floor(Difficulty / 2)) {
     spawnClock = 0;
     spawnAsteroid();
   }
@@ -358,7 +425,7 @@ function update(delta) {
     asteroid.mesh.rotation.y += asteroid.spin.y * delta;
     asteroid.mesh.rotation.z += asteroid.spin.z * delta;
     wrapPositionEntity(asteroid.mesh.position);
-    if (asteroid.mesh.position.distanceTo(ship.position) < asteroid.radius * 0.9) {
+    if (asteroid.mesh.position.distanceTo(ship.position) - 0.3 < asteroid.radius * 0.9) {
       scene.remove(asteroid.mesh);
       asteroid.mesh.geometry.dispose();
       asteroid.mesh.material.dispose();
@@ -385,11 +452,8 @@ function update(delta) {
 
 function LevelUp() {
   if (Exp >= 10) {
+    Coins += 1;
     Difficulty += 1;
-    Thrust += Math.random() / 2;
-    MaxSpeed += Math.random() / 2;
-    TurnSpeed += Math.random() / 2;
-    ShotSpeed += Math.random() / 2;
     Exp = 0;
     Dnode.textContent = String(Difficulty);
   }
@@ -408,12 +472,10 @@ requestAnimationFrame(animate);
 
 function resize() {
   const aspect = window.innerWidth / window.innerHeight;
-  const height = 16;
-  worldWidth = height * aspect;
-  camera.left = -(height * aspect) / 2;
-  camera.right = (height * aspect) / 2;
-  camera.top = height / 2;
-  camera.bottom = -height / 2;
+  camera.left = -(16 * aspect) / 2;
+  camera.right = (16 * aspect) / 2;
+  camera.top = 16 / 2;
+  camera.bottom = -16 / 2;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -425,11 +487,21 @@ window.addEventListener('keydown', (event) => {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) event.preventDefault();
   keys.add(key);
   if (key === 'p' || key === 'escape') togglePause();
-  if (key === 'enter' && state !== 'playing') startRun();
+  if (key === 'enter' && state !== 'playing' && state !== 'shop') startRun();
+  if (key === 'f') toggleShop();
 });
 window.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
 window.addEventListener('blur', () => keys.clear());
-startButton.addEventListener('click', () => state === 'paused' ? togglePause() : startRun());
+startButton.addEventListener('click', () => {
+  if (state === 'shop') toggleShop();
+  else if (state === 'paused') togglePause();
+  else startRun();
+});
+shopToggle.addEventListener('click', toggleShop);
+shopPanel.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-upgrade]');
+  if (button) purchaseUpgrade(button.dataset.upgrade);
+});
 soundToggle.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   soundGlyph.textContent = soundEnabled ? 'SOUND ON' : 'SOUND OFF';

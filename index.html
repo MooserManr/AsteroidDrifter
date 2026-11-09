@@ -19,6 +19,7 @@
           <span>DRIFTER<span class="wordmark-dot">.</span></span>
         </a>
         <div class="topbar-actions">
+          <button class="icon-button" id="shop-toggle" type="button" aria-label="Toggle ship upgrade shop" title="Shop (F)">SHOP</button>
           <button class="icon-button" id="sound-toggle" type="button" aria-label="Mute sound" title="Mute sound">
             <span id="sound-glyph" aria-hidden="true">SOUND ON</span>
           </button>
@@ -34,8 +35,31 @@
         <div class="message-kicker"><span class="status-light"></span><span id="message-kicker">DEEP SPACE / SECTOR 01</span></div>
         <h1 id="message-title">ASTEROID<br /><span>DRIFTER</span></h1>
         <p id="message-copy">Keep moving. The field won't.</p>
+        <div class="shop-panel hidden" id="shop-panel" aria-label="Ship upgrades">
+          <div class="shop-balance">AVAILABLE CREDITS <strong id="shop-coins">0</strong></div>
+          <button class="shop-item" type="button" data-upgrade="thrust">
+            <span class="shop-item-copy"><strong>Engine thrust</strong><small>Current: <span data-upgrade-value></span></small></span>
+            <span class="shop-item-cost"><span data-upgrade-cost></span> CR</span>
+          </button>
+          <button class="shop-item" type="button" data-upgrade="speed">
+            <span class="shop-item-copy"><strong>Top speed</strong><small>Current: <span data-upgrade-value></span></small></span>
+            <span class="shop-item-cost"><span data-upgrade-cost></span> CR</span>
+          </button>
+          <button class="shop-item" type="button" data-upgrade="turn">
+            <span class="shop-item-copy"><strong>Turn rate</strong><small>Current: <span data-upgrade-value></span></small></span>
+            <span class="shop-item-cost"><span data-upgrade-cost></span> CR</span>
+          </button>
+          <button class="shop-item" type="button" data-upgrade="weapon">
+            <span class="shop-item-copy"><strong>Shot speed</strong><small>Current: <span data-upgrade-value></span></small></span>
+            <span class="shop-item-cost"><span data-upgrade-cost></span> CR</span>
+          </button>
+          <button class="shop-item" type="button" data-upgrade="ShotTime">
+            <span class="shop-item-copy"><strong>Shot clock</strong><small>Current: <span data-upgrade-value></span></small></span>
+            <span class="shop-item-cost"><span data-upgrade-cost></span> CR</span>
+          </button>
+        </div>
         <button class="primary-button" id="start-button" type="button"><span id="start-label">LAUNCH RUN</span><span aria-hidden="true">&#8594;</span></button>
-        <div class="control-hint"><span>WASD / ARROWS</span><b>MOVE</b><span>SPACE</span><b>FIRE</b><span>P</span><b>PAUSE</b></div>
+        <div class="control-hint"><span>WASD / ARROWS</span><b>MOVE</b><span>SPACE</span><b>FIRE</b><span>F</span><b>SHOP</b><span>P</span><b>PAUSE</b></div>
       </section>
       <footer class="bottom-bar">
         <span class="footer-location"><span class="signal-mark"></span> OUTER RIM <span class="footer-divider">/</span> 07.24 AU</span>
