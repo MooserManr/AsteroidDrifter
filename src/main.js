@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import './style.css';
-import { ThreeMFLoader } from 'three/examples/jsm/Addons.js';
 
 const mount = document.querySelector('#game');
 const scoreNode = document.querySelector('#score');
@@ -64,7 +63,7 @@ let spawnClock = 0;
 let lastTime = 0;
 let soundEnabled = true;
 let audioContext;
-let bestScore = Number(localStorage.getItem('asteroid-drifter-best') || 0);
+let bestScore = Number(localStorage.getItem('asteroid-drifter-best'));
 bestNode.textContent = String(bestScore).padStart(5, '0');
 
 scene.add(new THREE.HemisphereLight(0xbde9d8, 0x18251e, 2));
@@ -136,14 +135,9 @@ function updateScore(value) {
   }
 }
 
+
 function makeAsteroid(size = 1) {
   const geometry = new THREE.IcosahedronGeometry(size, 1);
-  const positionAttribute = geometry.getAttribute('position');
-  for (let index = 0; index < positionAttribute.count; index += 1) {
-    const vertex = new THREE.Vector3().fromBufferAttribute(positionAttribute, index);
-    vertex.multiplyScalar(0.79 + Math.random() * 0.01);
-    positionAttribute.setXYZ(index, vertex.x, vertex.y, vertex.z);
-  }
   geometry.computeVertexNormals();
   const mesh = new THREE.Mesh(geometry, asteroidMaterial.clone());
   mesh.material.color.setHSL(0.38 + Math.random() * 0.12, 0.08 + Math.random() * 0.1, 0.34 + Math.random() * 0.17);
@@ -279,6 +273,7 @@ function startRun() {
   asteroids.length = 0;
   shots.length = 0;
   score = 0;
+  ShotTime = 0.7;
   level = 1;
   Thrust = 2.5;
   MaxSpeed = 7;
@@ -287,6 +282,7 @@ function startRun() {
   Exp = 0;
   Difficulty = 1;
   Coins = 0;
+  Dnode.textContent = '1';
   Object.keys(purchasedUpgrades).forEach((key) => {purchasedUpgrades[key] = 0;});
   updateScore(0);
   setLives(3);
